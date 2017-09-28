@@ -10,18 +10,13 @@
  *
  */
  
- #define HUEMAX		255						// 	размер шкалы тонов
+ #define HUEMAX		180						// 	размер шкалы тонов
  #define SATMAX 	255						//	макс. знач. насыщенности
  #define VALMAX		255						//	макс. знач. яркости
- #define HUE_DIV	HUEMAX / 6		//	размер сектора цветового тона
+ #define HUE_DIV	30						//	размер сектора цветового тона
  
-/* 
-unsigned char[3] hsv2rgb (unsigned char[3] hsv){
-	hvs2rgb(hsv[0], hsv[1], hsv[2])
-}
-*/
 	
-unsigned char[3] hsv2rgb (unsigned char hue, unsigned char sat, unsigned char val, unsigned char rgb[])
+void hsv2rgb (unsigned char hue, unsigned char sat, unsigned char val, unsigned char rgb[3]){
 	unsigned char v_min;
 	unsigned char v_diff;
 	
@@ -49,40 +44,39 @@ unsigned char[3] hsv2rgb (unsigned char hue, unsigned char sat, unsigned char va
 	}else{
 		v_min = (unsigned char)((unsigned short)(SATMAX - sat) * val / SATMAX);
 	}
-
 	v_diff = (unsigned char)((unsigned short)(val - v_min)*(hue % HUE_DIV)/HUE_DIV);
-	 
-	switch(hue / HUE_DIV){		//	Порядок в ленте GRB
+	
+	switch(hue/HUE_DIV){		//	Порядок в ленте GRB
 		case 0:	rgb[1] = val ;
-						rgb[0] = v_min + v_diff;
-						rgb[2] = v_min;
+				rgb[0] = v_min + v_diff;
+				rgb[2] = v_min;
 						break;
 						
 		case 1:	rgb[1] = val - v_diff;
-						rgb[0] = val;
-						rgb[2] = v_min;
+				rgb[0] = val;
+				rgb[2] = v_min;
 						break;
 						
 		case 2:	rgb[1] = v_min;
-						rgb[0] = val;
-						rgb[2] = v_min + v_diff;
+				rgb[0] = val;
+				rgb[2] = v_min + v_diff;
 						break;
 						
 		case 3:	rgb[1] = v_min ;
-						rgb[0] = val - v_diff;
-						rgb[2] = val;
+				rgb[0] = val - v_diff;
+				rgb[2] = val;
 						break;
 
 		case 4:	rgb[1] = v_min + v_diff;
-						rgb[0] = v_min;
-						rgb[2] = val;
+				rgb[0] = v_min;
+				rgb[2] = val;
 						break;
 						
 		case 5:	rgb[1] = val;
-						rgb[0] = v_min;
-						rgb[2] = val - v_diff ;
+				rgb[0] = v_min;
+				rgb[2] = val - v_diff ;
 						break;
 	}
 	
-	return rgb;
+	return;
 }

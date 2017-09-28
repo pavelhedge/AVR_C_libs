@@ -13,11 +13,14 @@
  *
  */
 
-
+#include <avr/pgmspace.h>
 
 #define uart_rcv_full 0
 #define uart_rcv_empty 1
 #define uart_send_full 2
+
+#define TRUE 	1
+#define FALSE	0
 
 #define UART_BUFF_RCV_SIZE 		20
 #define UART_BUFF_SEND_SIZE 	20
@@ -40,14 +43,37 @@ unsigned char *uart_send_in = &uart_send_buff[0];
 unsigned char *uart_send_out = &uart_send_buff[0];
 unsigned char uart_flag;
 
+#if (defined __AVR_ATmega48__)||(defined __AVR_ATmega48A__)||(defined __AVR_ATmega48P__)||(defined __AVR_ATmega48PA__)
+	#define UDR UDR0
+	#define UBRRH UBRRH0
+	#define UBRRL UBRRL0
+	#define UCSRA UCSRA0
+		#define RXC RXC0
+		#define TXC TXC0
+		#define UDRE UDRE0
+	#define UCSRB UCSRB0
+		#define RXEN RXEN0
+		#define TXEN TXEN0
+		#define RXCIE RXCIE0
+		#define TXCIE TXCIE0
+		#define UDRIE UDRIE0
+	#define UCSRC UCSRC0
+		#define USBS USBS0
+		#define UCSZ UCSZ0
+#endif
+
 
 void uart_init(void){
-	UBRR0H = (unsigned char)(ubrr>>8);
-	UBRR0L = (unsigned char)ubrr;
+	UBRRH = (unsigned char)(ubrr>>8);
+	UBRRL = (unsigned char)ubrr;
 	//Enable receiver and transmitter */
-	UCSR0B = 1 << RXEN0 | 1 << TXEN0 | 1 << RXCIE0 | 0 << TXCIE0 | 0 << UDRIE0;
+	UCSRB = 1 << RXEN | 1 << TXEN | 1 << RXCIE | 0 << TXCIE | 0 << UDRIE;
 	/* Set frame format: 8data, 2stop bit */
-	UCSR0C = 1 << USBS0 | 3 << UCSZ00;	uart_flag = 0;}
+#if (defined __AVR_ATmega48__)||(defined __AVR_ATmega48A__)||(defined __AVR_ATmega48P__)||(defined __AVR_ATmega48PA__)
+	UCSRC = 1 << USBS | 3 << UCSZ0;
+#else 
+	UCSRC = 1 << URSEL | 1 << USBS | 3 << UCSZ0;
+#endif	uart_flag = 0;}
 
 
 char uart_send_char(char byte){
@@ -59,7 +85,7 @@ char uart_send_char(char byte){
 	if(uart_send_in == uart_send_out){
 		set_bit(uart_flag, uart_send_full);
 	}
-	set_bit(UCSR0B, UDRIE0);
+	set_bit(UCSRB, UDRIE);
 	return TRUE;
 }
 
@@ -73,7 +99,7 @@ char uart_send_word(int word){
 		if (uart_send_in == &uart_send_buff[UART_BUFF_SEND_SIZE])	uart_send_in = &uart_send_buff[0];
 		
 		if (uart_send_in == uart_send_out) set_bit(uart_flag, uart_send_full);
-		set_bit(UCSR0B, UDRIE0);
+		set_bit(UCSRB, UDRIE);
 		return TRUE;
 	}else return FALSE;
 }
@@ -90,7 +116,7 @@ char uart_send_charr(const char *string, unsigned char length){
 		if (uart_send_in >= &uart_send_buff[UART_BUFF_SEND_SIZE])	uart_send_in = &uart_send_buff[0];
 		if(uart_send_in == uart_send_out)	set_bit(uart_flag, uart_send_full);
 	}
-	set_bit(UCSR0B, UDRIE0);
+	set_bit(UCSRB, UDRIE);
 	return TRUE;
 }
 
@@ -104,7 +130,7 @@ char uart_send_pstring(const char *string, unsigned char length){
 		if (uart_send_in >= &uart_send_buff[UART_BUFF_SEND_SIZE])	uart_send_in = &uart_send_buff[0];
 		if(uart_send_in == uart_send_out)	set_bit(uart_flag, uart_send_full);
 	}
-	set_bit(UCSR0B, UDRIE0);
+	set_bit(UCSRB, UDRIE);
 	return TRUE;
 }
 
@@ -124,19 +150,19 @@ char uart_recieve_byte(){
 
 
 ISR(USART_UDRE_vect){
-	UDR0 = *uart_send_out++;
+	UDR = *uart_send_out++;
 	clear_bit(uart_flag, uart_send_full);
 	if (uart_send_out >= &uart_send_buff[UART_BUFF_SEND_SIZE]){
 		uart_send_out = &uart_send_buff[0];			//достиг конца - на начало
 	} 
 	if (uart_send_in == uart_send_out){
-		clear_bit(UCSR0B, UDRIE0);		 			// остановить передачу - отключить прерывание
+		clear_bit(UCSRB, UDRIE);		 			// остановить передачу - отключить прерывание
 	}
 }
 
 
-ISR(USART_RX_vect){
-	*uart_rcv_in = UDR0;
+ISR(USART_RXC_vect){
+	*uart_rcv_in = UDR;
 	clear_bit(uart_flag, uart_rcv_empty);
 	if (uart_rcv_in >= &uart_rcv_buff[UART_BUFF_RCV_SIZE]){
 		uart_rcv_in = &uart_rcv_buff[0];

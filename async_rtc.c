@@ -21,15 +21,17 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
+/*
 FUSES =
 {
 	.low = 0xE3,		//Select cpu clk: Internal calibrated RC-oscillator @ 4MHz
 	.high = 0x99,		//Default settings
 	.extended = 0xE3,	//Default settings
 };
+*/
 
 static char not_leap(void);
-static void init(void);
+static void rtc_init(void);
 
 typedef struct{
 	unsigned char second;
@@ -43,6 +45,7 @@ typedef struct{
 	
 	time t;
 
+/*
 int main(void)
 {
     init();	//Initialize registers and configure RTC.
@@ -53,32 +56,33 @@ int main(void)
 		TCCR0=(1<<CS00)|(1<<CS02);							//Write dummy value to control register
 		while(ASSR&((1<<TCN0UB)|(1<<OCR0UB)|(1<<TCR0UB)));	//Wait until TC0 is updated
 	}
-}
+}*/
 
-static void init(void)
+
+static void rtc_init(void)
 {
 	//Wait for external clock crystal to stabilize;
 	for (uint8_t i=0; i<0x40; i++)
 	{
 		for (int j=0; j<0xFFFF; j++);
 	}
-	DDRB = 0xFF;											//Configure all eight pins of port B as outputs
-	TIMSK &= ~((1<<TOIE0)|(1<<OCIE0));						//Make sure all TC0 interrupts are disabled
-	ASSR |= (1<<AS0);										//set Timer/counter0 to be asynchronous from the CPU clock
-															//with a second external clock (32,768kHz)driving it.								
-	TCNT0 =0;												//Reset timer
-	TCCR0 =(1<<CS00)|(1<<CS02);								//Prescale the timer to be clock source/128 to make it
-															//exactly 1 second for every overflow to occur
-	while (ASSR & ((1<<TCN0UB)|(1<<OCR0UB)|(1<<TCR0UB)))	//Wait until TC0 is updated
+	for (uint8_t i=0; i<0x40; i++)
+	{
+		for (int j=0; j<0xFFFF; j++);
+	}
+	TIMSK &= ~((1<<TOIE2)|(1<<OCIE2));						//Make sure all TC0 interrupts are disabled
+	ASSR |= (1<<AS2);										//set Timer/counter0 to be asynchronous from the CPU clock
+	//with a second external clock (32,768kHz)driving it.
+	TCNT2 =0;												//Reset timer
+	TCCR2 =(1<<CS20)|(1<<CS22);								//Prescale the timer to be clock source/128 to make it
+	//exactly 1 second for every overflow to occur
+	while (ASSR & ((1<<TCN2UB)|(1<<OCR2UB)|(1<<TCR2UB)))	//Wait until TC0 is updated
 	{}
-	TIMSK |= (1<<TOIE0);									//Set 8-bit Timer/Counter0 Overflow Interrupt Enable
-	sei();													//Set the Global Interrupt Enable Bit
-	set_sleep_mode(SLEEP_MODE_PWR_SAVE);					//Selecting power save mode as the sleep mode to be used
-	sleep_enable();											//Enabling sleep mode
-}
+	TIMSK |= (1<<TOIE2);									//Set 8-bit Timer/Counter0 Overflow Interrupt Enable	//Set 8-bit Timer/Counter0 Overflow Interrupt Enable
+	}
 
-ISR(TIMER0_OVF_vect)
-{
+
+void second_handler(void){
 	if (++t.second==60)        //keep track of time, date, month, and year
 	{
 		t.second=0;
@@ -122,14 +126,15 @@ ISR(TIMER0_OVF_vect)
 					t.month=1;
 					if(++t.year==100){
 						t.year=0;
-						t.century++
+						t.century++;
 					}
 				}
 			}
 		}
 	}
-	PORTB=~(((t.second&0x01)|t.minute<<1)|t.hour<<7);
+	
 }
+
 
 static char not_leap(void)      //check for leap year
 {

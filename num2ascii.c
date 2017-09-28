@@ -1,10 +1,11 @@
-#include <math.h>
 /*
  * Переводит число в ASCII кодировку (например для отправки по UART)
  *
  * Чтоб 
  *
  */
+
+#include "pow_char.h"
 
 #define HEX2CH_SIZE sizeof(char)*2
 #define WORD2CH_SIZE sizeof(int)*2
@@ -37,7 +38,7 @@ char* whex2ascii(unsigned int number){
 char* dec2ascii(unsigned char number){
 	static char result[DEC_SIZE];
 	for (unsigned char i = 0; i < DEC_SIZE; i++){
-		char ci = number/(char)pow(10, DEC_SIZE - i - 1);
+		char ci = number/(char)pow_char(10, DEC_SIZE - i - 1);
 		if(ci == 0 && ( i == 0 || (i == 1 && result[0] == ' '))) result[i] = ' ';
 		else result[i] = ci%10 + '0';
 	}
