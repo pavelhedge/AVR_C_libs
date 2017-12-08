@@ -27,11 +27,10 @@ FUSES =
 	.low = 0xE3,		//Select cpu clk: Internal calibrated RC-oscillator @ 4MHz
 	.high = 0x99,		//Default settings
 	.extended = 0xE3,	//Default settings
-};
-*/
+};*/
 
-static char not_leap(void);
-static void rtc_init(void);
+//static char not_leap(void);
+// void init(void);
 
 typedef struct{
 	unsigned char second;
@@ -45,8 +44,7 @@ typedef struct{
 	
 	time t;
 
-/*
-int main(void)
+/*int main(void)
 {
     init();	//Initialize registers and configure RTC.
 	
@@ -58,7 +56,6 @@ int main(void)
 	}
 }*/
 
-
 static void rtc_init(void)
 {
 	//Wait for external clock crystal to stabilize;
@@ -66,23 +63,24 @@ static void rtc_init(void)
 	{
 		for (int j=0; j<0xFFFF; j++);
 	}
-	for (uint8_t i=0; i<0x40; i++)
-	{
-		for (int j=0; j<0xFFFF; j++);
-	}
-	TIMSK &= ~((1<<TOIE2)|(1<<OCIE2));						//Make sure all TC0 interrupts are disabled
+	//DDRB = 0xFF;											//Configure all eight pins of port B as outputs
+	TIMSK &= ~(1<<TOIE2);//|(1<<OCIE2));					//Make sure all TC0 interrupts are disabled
 	ASSR |= (1<<AS2);										//set Timer/counter0 to be asynchronous from the CPU clock
-	//with a second external clock (32,768kHz)driving it.
+															//with a second external clock (32,768kHz)driving it.								
 	TCNT2 =0;												//Reset timer
-	TCCR2 =(1<<CS20)|(1<<CS22);								//Prescale the timer to be clock source/128 to make it
-	//exactly 1 second for every overflow to occur
-	while (ASSR & ((1<<TCN2UB)|(1<<OCR2UB)|(1<<TCR2UB)))	//Wait until TC0 is updated
-	{}
-	TIMSK |= (1<<TOIE2);									//Set 8-bit Timer/Counter0 Overflow Interrupt Enable	//Set 8-bit Timer/Counter0 Overflow Interrupt Enable
-	}
-
-
-void second_handler(void){
+	TCCR2 =(6<<CS20);								//Prescale the timer to be clock source/128 to make it
+															//exactly 1 second for every overflow to occur
+	while (ASSR & (1<<TCN2UB));//|(1<<OCR2UB)|(1<<TCR2UB)))	//Wait until TC0 is updated
+	
+	TIMSK |= (1<<TOIE2);									//Set 8-bit Timer/Counter0 Overflow Interrupt Enable
+/*
+	sei();													//Set the Global Interrupt Enable Bit
+	set_sleep_mode(SLEEP_MODE_PWR_SAVE);					//Selecting power save mode as the sleep mode to be used
+	sleep_enable();		*/									//Enabling sleep mode
+}
+/*
+ISR(TIMER0_OVF_vect)
+{
 	if (++t.second==60)        //keep track of time, date, month, and year
 	{
 		t.second=0;
@@ -126,16 +124,16 @@ void second_handler(void){
 					t.month=1;
 					if(++t.year==100){
 						t.year=0;
-						t.century++;
+						t.century++
 					}
 				}
 			}
 		}
 	}
-	
-}
+	PORTB=~(((t.second&0x01)|t.minute<<1)|t.hour<<7);
+}*/
 
-
+/*
 static char not_leap(void)      //check for leap year
 {
 	if (!(t.year == 0))
@@ -146,4 +144,4 @@ static char not_leap(void)      //check for leap year
 	{
 		return (char)(t.year%4);
 	}
-}
+}*/

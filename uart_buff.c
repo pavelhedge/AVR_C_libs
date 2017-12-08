@@ -23,12 +23,8 @@
 #define FALSE	0
 
 #define UART_BUFF_RCV_SIZE 		20
-#define UART_BUFF_SEND_SIZE 	20
-#define UART_SEND_FREEPLACE (uart_send_out - uart_send_in) >= 0? (uart_send_out - uart_send_in) : (uart_send_out - uart_send_in + UART_BUFF_SEND_SIZE)
+#define UART_BUFF_SEND_SIZE 	40
 
-/* 
-
-*/
 #define baudrate 9600
 #define ubrr (unsigned int)(F_CPU / ((baudrate * 16.0) - 1))
 
@@ -73,7 +69,13 @@ void uart_init(void){
 	UCSRC = 1 << USBS | 3 << UCSZ0;
 #else 
 	UCSRC = 1 << URSEL | 1 << USBS | 3 << UCSZ0;
-#endif	uart_flag = 0;}
+#endif	uart_flag = 0;	sei();}
+
+
+char uart_send_freeplace(void){
+	signed char uart_send_free = uart_send_out - uart_send_in;
+	return uart_send_free > 0 ? uart_send_free : uart_send_free + UART_BUFF_SEND_SIZE;
+}
 
 
 char uart_send_char(char byte){
@@ -91,7 +93,7 @@ char uart_send_char(char byte){
 
 
 char uart_send_word(int word){
-	if (check_bit(uart_flag, uart_send_full) || UART_SEND_FREEPLACE >= sizeof(int)){
+	if (check_bit(uart_flag, uart_send_full) || uart_send_freeplace() >= sizeof(int)){
 		*uart_send_in++ = (char)word>>8;
 		if (uart_send_in == &uart_send_buff[UART_BUFF_SEND_SIZE])	uart_send_in = &uart_send_buff[0];
 		
@@ -106,9 +108,9 @@ char uart_send_word(int word){
 
 
 /*	Для нуль-терминированных строк length = sizeof(string) - 1 */
-char uart_send_charr(const char *string, unsigned char length){
+char uart_send_string(const char *string, unsigned char length){
 	// Если буфер полон или просто меньше размера строки или свободное пространство буфера меньше строки - выход
-	if(length > UART_BUFF_SEND_SIZE || check_bit(uart_flag, uart_send_full) || UART_SEND_FREEPLACE >= length)	return FALSE;
+	if(length > UART_BUFF_SEND_SIZE || check_bit(uart_flag, uart_send_full) || uart_send_freeplace() <= length)	return FALSE;
 	
 	// Если строка влезает
 	for (unsigned char i = 0; i < length; i++){
@@ -122,7 +124,7 @@ char uart_send_charr(const char *string, unsigned char length){
 
 char uart_send_pstring(const char *string, unsigned char length){
 	// Если буфер полон или просто меньше размера строки или свободное пространство буфера меньше строки - выход
-	if(length > UART_BUFF_SEND_SIZE || check_bit(uart_flag, uart_send_full) || UART_SEND_FREEPLACE >= length)	return FALSE;
+	if(length > UART_BUFF_SEND_SIZE || check_bit(uart_flag, uart_send_full) || uart_send_freeplace() <= length)	return FALSE;
 
 	// Если строка влезает
 	for (unsigned char i = 0; i < length - 1; i++){

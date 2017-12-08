@@ -13,10 +13,10 @@
 
 #define num		r24
 #define exp		r22
-#define temp	r18
-#define temp2	r19
-#define temp3	r20
-#define temp4	r21
+#define zero	r18
+#define temp1	r19
+#define temp2	r20
+#define temp3	r21
 
 .global pow_char
 
@@ -25,16 +25,16 @@ pow_char:
 	brlo exp_zero
 	breq exp_one
 	push r0
-	clr temp
+	clr zero
 	mov r0, num
 exp_start:
 	mul r0, num
-	cpse r1, temp
+	cpse r1, zero
 	rjmp exp_int
 	dec exp
 	brne exp_start
 exp_end:
-	movw num, temp3
+	movw num, r0
 	pop r0
 	clr r1
 	ret
@@ -42,13 +42,14 @@ exp_end:
 exp_int:
 	dec exp
 	breq exp_end
-	mov temp2, r1
+	mov temp1, r1
 	mul r0, num
-	movw temp3, r0
-	mul temp2, num
-	cpse r1, temp
+	movw temp2, r0
+	mul temp1, num
+	cpse r1, zero
 	rjmp exp_err
-	add temp4, r0
+	add r1, temp3
+	adc r0, temp2
 	brcs exp_err
 	rjmp exp_int 
 	 

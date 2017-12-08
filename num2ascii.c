@@ -44,3 +44,5 @@ char* dec2ascii(unsigned char number){
 	}
 	return result;
 }
+
+
