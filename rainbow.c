@@ -19,9 +19,9 @@ char in_range(char value, char lower, char upper){
 //	Ширина секторов часовой и минутной стрелок
 #define HOUR_WIDTH 		2
 #define MINUTE_WIDTH 	1
-#define BGND			0x80
+#define BGND			0x10
 
-#include "async_rtc.c"
+#include "async_rtc_8.c"
 #include "smartled.h"
 #include "hsv2rgb.c"
 #include <stdlib.h>
@@ -58,9 +58,9 @@ void rainbow_clock1(void){
 			unsigned char hue = (unsigned char)((unsigned short)(HUEMAX * (t.minute - i)/sector_lenght));
 			hsv2rgb(hue, SATMAX, VALMAX, rgb_array[i]);
 		} else if(i == t.second){
-			rgb_array[i][0] = 0;
-			rgb_array[i][1] = 0;
-		 	rgb_array[i][2] = 0;
+			rgb_array[i][0] = 0x00;
+			rgb_array[i][1] = 0x00;
+		 	rgb_array[i][2] = 0x00;
 		} else {
 			rgb_array[i][0] = BGND;
 			rgb_array[i][1] = BGND;
@@ -77,16 +77,16 @@ void plain_clock(void){
 	for (unsigned char i = 0; i < LED_NUM; i++){
 		if (i == t.second) {
 			rgb_array[i][0] = 0x00;
-			rgb_array[i][1] = 0xFF;
+			rgb_array[i][1] = 0x10;
 			rgb_array[i][2] = 0x00;
 			} else if (abs(i - t.minute) < 2){
-			rgb_array[i][0] = 0xFF;
+			rgb_array[i][0] = 0x10;
 			rgb_array[i][1] = 0x00;
 			rgb_array[i][2] = 0x00;
 			} else if (abs(i - hour_pos) < 3){
 			rgb_array[i][0] = 0x00;
 			rgb_array[i][1] = 0x00;
-			rgb_array[i][2] = 0xFF;
+			rgb_array[i][2] = 0x10;
 			} else {
 			rgb_array[i][0] = 0x00;
 			rgb_array[i][1] = 0x00;

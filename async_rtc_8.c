@@ -29,7 +29,7 @@ FUSES =
 	.extended = 0xE3,	//Default settings
 };*/
 
-//static char not_leap(void);
+static char not_leap(void);
 // void init(void);
 
 typedef struct{
@@ -73,14 +73,15 @@ static void rtc_init(void)
 	while (ASSR & (1<<TCN2UB));//|(1<<OCR2UB)|(1<<TCR2UB)))	//Wait until TC0 is updated
 	
 	TIMSK |= (1<<TOIE2);									//Set 8-bit Timer/Counter0 Overflow Interrupt Enable
-/*
+
 	sei();													//Set the Global Interrupt Enable Bit
-	set_sleep_mode(SLEEP_MODE_PWR_SAVE);					//Selecting power save mode as the sleep mode to be used
+/*	set_sleep_mode(SLEEP_MODE_PWR_SAVE);					//Selecting power save mode as the sleep mode to be used
 	sleep_enable();		*/									//Enabling sleep mode
 }
 /*
 ISR(TIMER0_OVF_vect)
-{
+*/
+void second_is_over(void){
 	if (++t.second==60)        //keep track of time, date, month, and year
 	{
 		t.second=0;
@@ -124,16 +125,16 @@ ISR(TIMER0_OVF_vect)
 					t.month=1;
 					if(++t.year==100){
 						t.year=0;
-						t.century++
+						t.century++;
 					}
 				}
 			}
 		}
 	}
 	PORTB=~(((t.second&0x01)|t.minute<<1)|t.hour<<7);
-}*/
+}
 
-/*
+
 static char not_leap(void)      //check for leap year
 {
 	if (!(t.year == 0))
@@ -144,4 +145,4 @@ static char not_leap(void)      //check for leap year
 	{
 		return (char)(t.year%4);
 	}
-}*/
+}
