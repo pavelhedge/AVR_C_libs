@@ -41,22 +41,24 @@ unsigned char uart_flag;
 
 #if (defined __AVR_ATmega48__)||(defined __AVR_ATmega48A__)||(defined __AVR_ATmega48P__)||(defined __AVR_ATmega48PA__)
 	#define UDR UDR0
-	#define UBRRH UBRRH0
-	#define UBRRL UBRRL0
-	#define UCSRA UCSRA0
+	#define UBRRH UBRR0H
+	#define UBRRL UBRR0L
+	#define UCSRA UCSR0A
 		#define RXC RXC0
 		#define TXC TXC0
 		#define UDRE UDRE0
-	#define UCSRB UCSRB0
+	#define UCSRB UCSR0B
 		#define RXEN RXEN0
 		#define TXEN TXEN0
 		#define RXCIE RXCIE0
 		#define TXCIE TXCIE0
 		#define UDRIE UDRIE0
-	#define UCSRC UCSRC0
+	#define UCSRC UCSR0C
 		#define USBS USBS0
-		#define UCSZ UCSZ0
-#endif
+		#define UCSZ0 UCSZ00
+		#define UCSZ1 UCSZ01
+		#define UCSZ2 UCSZ02
+#endif 
 
 
 void uart_init(void){
@@ -78,7 +80,7 @@ char uart_send_freeplace(void){
 }
 
 
-char uart_send_char(char byte){
+char uart_send_char(uint8_t byte){
 	if (check_bit(uart_flag, uart_send_full)) return FALSE;
 	*uart_send_in++ = byte;
 	if (uart_send_in == &uart_send_buff[UART_BUFF_SEND_SIZE]){
@@ -163,7 +165,7 @@ ISR(USART_UDRE_vect){
 }
 
 
-ISR(USART_RXC_vect){
+ISR(USART_RX_vect){
 	*uart_rcv_in = UDR;
 	clear_bit(uart_flag, uart_rcv_empty);
 	if (uart_rcv_in >= &uart_rcv_buff[UART_BUFF_RCV_SIZE]){
